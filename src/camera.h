@@ -6,9 +6,13 @@
 /*
 Camera class
 
-Members: 
-
-
+Members:
+center - center of the camera
+viewport_u - vector going across horizontal edge of viewport
+viewport_v - vector going across vertical edge of viewport (top to bottom)
+pixel_delta_u - horizontal distance between 2 pixels
+pixel_delta_v - vertical distance between 2 pixels
+pixel00_loc - position of the first pixel (top left) offset by 0.5 * pixel_deltas
 */
 
 class Camera {
@@ -40,6 +44,10 @@ class Camera {
         void setLoc(const double& distance){
             pixel00_loc = center - vec3(0, 0, distance) - (viewport_u + viewport_v) / 2.0 + 0.5*(pixel_delta_u + pixel_delta_v);
         }
+
+        /*
+        Getter functions
+        */
 
         const point3& getCenter() const {
             return center;

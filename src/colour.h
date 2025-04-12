@@ -4,7 +4,7 @@
 #include <glm/glm.hpp>
 #include <iostream>
 
-using colour = glm::vec3;
+using colour = glm::dvec3;
 
 //takes in reference to output stream and pixel_colour
 //const& - passing pixel_colour by reference but promising not to modify it

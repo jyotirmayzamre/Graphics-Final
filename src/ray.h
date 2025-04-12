@@ -14,15 +14,15 @@ Methods:
 eval() - Evaluates the ray at given time t
 
 */
-class ray {
+class Ray {
     public:
 
-        ray() {};
+        Ray() {};
 
         //constructor function
-        ray(const point3& origin, const vec3& direction) : orig(origin), dir(direction) {};
+        Ray(const point3& origin, const vec3& direction) : orig(origin), dir(direction) {};
 
-        //getters for members
+        //getters for members - read only reference, doesn't modify the object
         const point3& origin() const {
             return orig;
         }
@@ -30,8 +30,6 @@ class ray {
         const vec3& direction() const {
             return dir;
         }
-
-
 
         //const after the argument means that the object it is called on isn't modified
         point3 eval(double t) const {

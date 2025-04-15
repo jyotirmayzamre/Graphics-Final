@@ -1,0 +1,26 @@
+//abstract class that will have a hit function (defined by classes that extend the hittable object)
+#ifndef HITTABLE_H
+#define HITTABLE_H
+
+#include "ray.h"
+
+
+//class to store hit details - t value of ray, normal of surface
+class hit_record {
+    public:
+        point3 p;
+        vec3 normal;
+        double t;
+};
+
+//virtual lets you override a base class method 
+class hittable {
+    public:
+        //virtual destructor 
+        virtual ~hittable() = default;
+
+        virtual bool hit(const Ray& r, double ray_tmin, double ray_tmax, hit_record& rec) const = 0;
+};
+
+
+#endif

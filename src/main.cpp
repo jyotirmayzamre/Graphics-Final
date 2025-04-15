@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <stdbool.h>
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/norm.hpp>
 
 //sphere intersection code

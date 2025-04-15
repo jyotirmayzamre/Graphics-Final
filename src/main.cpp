@@ -3,27 +3,41 @@
 
 #include <iostream>
 #include <stdbool.h>
+#include <glm/gtx/norm.hpp>
 
 //sphere intersection code
 //need the radius (double), center (point 3), Ray r
 //compute the ray-sphere intersection components
-//check discriminants (if the ray passes through the sphere, then colour it red)
+//check discriminant (if the ray passes through the sphere (disc >= 0), then colour it red)
 
-bool hit_sphere(const Ray& r, const point3& center, double radius){
+double hit_sphere(const Ray& r, const point3& center, double radius){
+    //check for if the center of the sphere is behind the camera 
+    //uses squared length for faster computations (avoid square root)
     vec3 diff = center - r.origin();
-    auto a = glm::dot(r.direction(), r.direction());
-    auto b = -2.0 * glm::dot(r.direction(), diff);
-    auto c = glm::dot(diff, diff) - radius*radius;
-    auto disc = b*b - 4*a*c;
-    return (disc >= 0);
+    auto a = glm::length2(r.direction());
+    auto h = glm::dot(r.direction(), diff);
+    auto c = glm::length2(diff) - radius*radius;
+    auto disc = h*h - a*c;
+    if (disc < 0){
+        return -1.0;
+    } else {
+        //return the value of t found from the equation
+        return (h-std::sqrt(disc)) / (a);
+    }
 }
 
 
 // gradient to get interpolation between blue and white depending on ray's y coordinate
 colour ray_colour(const Ray& r){
-    if (hit_sphere(r, point3(0, 0, -1), 0.5)){
-        return colour(1, 0, 0);
+    auto t = hit_sphere(r, point3(0, 0, -1), 0.5);
+
+    //if hit, calculate the normalized normal vector
+    //colour based on the normal vector components for now
+    if (t > 0.0){
+        vec3 Normal = glm::normalize(r.eval(t) - vec3(0, 0, -1));
+        return 0.5*colour(Normal.x + 1, Normal.y + 1, Normal.z + 1);
     }
+
     vec3 unit_direction = glm::normalize(r.direction());
     //scale from [-1, 1] to [0, 1]
     auto a = 0.5*(unit_direction.y + 1.0);

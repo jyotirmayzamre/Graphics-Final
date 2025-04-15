@@ -1,7 +1,7 @@
 #ifndef RAY_H
 #define RAY_H
 
-#include <glm/glm.hpp>
+#include "helper.h"
 
 using point3 = glm::dvec3;
 using vec3 = glm::dvec3;

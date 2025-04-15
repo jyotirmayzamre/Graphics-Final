@@ -2,7 +2,7 @@
 #include "sphere.h"
 #include "hittable.h"
 #include "hittable_list.h"
-#include "rtweekend.h"
+#include "helper.h"
 #include <stdbool.h>
 
 

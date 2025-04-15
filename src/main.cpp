@@ -59,7 +59,7 @@ int main(){
     world.add(make_shared<sphere>(point3(0, -100.5, -1),100 ));
 
 
-    //multithreading
+    //multithreading iters
     std::vector<double> horizontalIter, verticalIter;
     horizontalIter.resize(image_width);
     verticalIter.resize(image_height);
@@ -75,21 +75,26 @@ int main(){
 
     auto start  = high_resolution_clock::now();
 
+    //2d vector for storing pixel values of the image
     std::vector<std::vector<colour>> image(image_height, std::vector<colour>(image_width));
     #define MT 1
+
+    //multithreaded approach
+    //essentially compute rows in parallel
+    //obtained a speedup from 6 seconds to 1.7 seconds
+    //next job is to write this using threads and not using a library
     #if MT
-        std::for_each(std::execution::par, verticalIter.begin(), verticalIter.end(),
-            [&](double y) 
-            {
-                std::for_each(std::execution::par, horizontalIter.begin(), horizontalIter.end(), 
-            [&, y](double x) {
-                auto pixel_center = pixel00_loc + (double(x) * pixel_delta_u) + (double(y) * pixel_delta_v);
+        std::for_each(std::execution::par, verticalIter.begin(), verticalIter.end(), [&](double y) {
+            for (int i = 0; i < image_width; i++){
+                auto pixel_center = pixel00_loc + (double(i) * pixel_delta_u) + (double(y) * pixel_delta_v);
                 auto ray_dir = pixel_center - center;
                 Ray r(center, ray_dir);
                 colour pixel_colour = ray_colour(r, world);
-                image[y][x] = pixel_colour;
-            });
-            });
+                image[y][i] = pixel_colour;
+            }
+        });
+
+    //normal approach
     #else 
         for (int j = 0; j < image_height; j++){
             std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
@@ -108,7 +113,9 @@ int main(){
     #endif
     
     auto stop = high_resolution_clock::now();
-    
+
+    //negligible time of 2 seconds to write to file
+    //focus more on bringing the rendering time down
     #if MT
         for(int j = 0; j < image_height; j++){
             for (int i = 0; i < image_width; i++){
@@ -123,10 +130,3 @@ int main(){
     return 1;
 }
 
-/*
-Implementing multithreading for ray tracer
-use 8 threads where each thread renders a single pixel
-start off with multithreading using CPU
-move to laptop GPU which has 387 cores...
-
-*/

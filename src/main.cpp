@@ -2,12 +2,30 @@
 #include "camera.h"
 
 #include <iostream>
-#include "tqdm/tqdm.h"
+#include <stdbool.h>
+
+//sphere intersection code
+//need the radius (double), center (point 3), Ray r
+//compute the ray-sphere intersection components
+//check discriminants (if the ray passes through the sphere, then colour it red)
+
+bool hit_sphere(const Ray& r, const point3& center, double radius){
+    vec3 diff = center - r.origin();
+    auto a = glm::dot(r.direction(), r.direction());
+    auto b = -2.0 * glm::dot(r.direction(), diff);
+    auto c = glm::dot(diff, diff) - radius*radius;
+    auto disc = b*b - 4*a*c;
+    return (disc >= 0);
+}
 
 
-
+// gradient to get interpolation between blue and white depending on ray's y coordinate
 colour ray_colour(const Ray& r){
+    if (hit_sphere(r, point3(0, 0, -1), 0.5)){
+        return colour(1, 0, 0);
+    }
     vec3 unit_direction = glm::normalize(r.direction());
+    //scale from [-1, 1] to [0, 1]
     auto a = 0.5*(unit_direction.y + 1.0);
     return double(1.0 - a)*colour(1.0, 1.0, 1.0) + double(a)*colour(0.5, 0.7, 1.0);
 }
@@ -40,6 +58,7 @@ int main(){
     vec3 pixel_delta_v = camera.getDeltaV();
 
 
+    //format for ppm file
     std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
 
     for (int j = 0; j < image_height; j++){
@@ -47,6 +66,8 @@ int main(){
         for (int i = 0; i < image_width; i++){
 
             //calculate the pixel center and ray direction
+            //from the first pixel location, find the offset using i or j * the offset vectors for the direction and add
+            //ray direction: to get vector AB, we do (B-A)
             auto pixel_center = pixel00_loc + (double(i) * pixel_delta_u) + (double(j) * pixel_delta_v);
             auto ray_dir = pixel_center - center;
             Ray r(center, ray_dir);

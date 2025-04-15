@@ -4,6 +4,11 @@
 #include "hittable_list.h"
 #include "helper.h"
 #include <stdbool.h>
+#include <chrono>
+#include <algorithm>
+#include <execution>
+
+using namespace std::chrono;
 
 
 
@@ -27,7 +32,7 @@ int main(){
 
     //setting aspect ratio + image dimensions
     auto aspect_ratio = 16.0 / 9.0;
-    int image_width = 400;
+    int image_width = 1920;
     int image_height = int (image_width / aspect_ratio);
     image_height = (image_height < 1) ? 1 : image_height;
 
@@ -54,24 +59,74 @@ int main(){
     world.add(make_shared<sphere>(point3(0, -100.5, -1),100 ));
 
 
+    //multithreading
+    std::vector<double> horizontalIter, verticalIter;
+    horizontalIter.resize(image_width);
+    verticalIter.resize(image_height);
+
+    for (double i = 0; i < image_width; i++){horizontalIter.push_back(i);}
+    for (double i = 0; i < image_height; i++){verticalIter.push_back(i);}
+
+
+
+
     //format for ppm file
     std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
 
-    for (int j = 0; j < image_height; j++){
-        std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
-        for (int i = 0; i < image_width; i++){
+    auto start  = high_resolution_clock::now();
 
-            //calculate the pixel center and ray direction
-            //from the first pixel location, find the offset using i or j * the offset vectors for the direction and add
-            //ray direction: to get vector AB, we do (B-A)
-            auto pixel_center = pixel00_loc + (double(i) * pixel_delta_u) + (double(j) * pixel_delta_v);
-            auto ray_dir = pixel_center - center;
-            Ray r(center, ray_dir);
-            colour pixel_colour = ray_colour(r, world);
-            write_colour(std::cout, pixel_colour);
+    std::vector<std::vector<colour>> image(image_height, std::vector<colour>(image_width));
+    #define MT 1
+    #if MT
+        std::for_each(std::execution::par, verticalIter.begin(), verticalIter.end(),
+            [&](double y) 
+            {
+                std::for_each(std::execution::par, horizontalIter.begin(), horizontalIter.end(), 
+            [&, y](double x) {
+                auto pixel_center = pixel00_loc + (double(x) * pixel_delta_u) + (double(y) * pixel_delta_v);
+                auto ray_dir = pixel_center - center;
+                Ray r(center, ray_dir);
+                colour pixel_colour = ray_colour(r, world);
+                image[y][x] = pixel_colour;
+            });
+            });
+    #else 
+        for (int j = 0; j < image_height; j++){
+            std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
+            for (int i = 0; i < image_width; i++){
+
+                //calculate the pixel center and ray direction
+                //from the first pixel location, find the offset using i or j * the offset vectors for the direction and add
+                //ray direction: to get vector AB, we do (B-A)
+                auto pixel_center = pixel00_loc + (double(i) * pixel_delta_u) + (double(j) * pixel_delta_v);
+                auto ray_dir = pixel_center - center;
+                Ray r(center, ray_dir);
+                colour pixel_colour = ray_colour(r, world);
+                write_colour(std::cout, pixel_colour);
+            }
         }
-    }
+    #endif
+    
+    auto stop = high_resolution_clock::now();
+    
+    #if MT
+        for(int j = 0; j < image_height; j++){
+            for (int i = 0; i < image_width; i++){
+                write_colour(std::cout, image[j][i]);
+            }
+        }
+    #else
+    #endif
 
-    std::clog << "\rDone.                     \n";
+    auto duration = duration_cast<milliseconds>(stop - start);
+    std::clog << "\nRender Time: " << duration.count() << " ms\n";
     return 1;
 }
+
+/*
+Implementing multithreading for ray tracer
+use 8 threads where each thread renders a single pixel
+start off with multithreading using CPU
+move to laptop GPU which has 387 cores...
+
+*/

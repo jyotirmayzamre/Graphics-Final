@@ -2,8 +2,10 @@
 #ifndef HITTABLE_H
 #define HITTABLE_H
 
+
 #include "ray.h"
 
+#include <stdbool.h>
 
 //class to store hit details - t value of ray, normal of surface
 class hit_record {
@@ -11,6 +13,14 @@ class hit_record {
         point3 p;
         vec3 normal;
         double t;
+        bool front_face;
+
+        //function for setting the normal vector's direction
+        //checks dot product to see if ray is inside the sphere or outside
+        void set_face_normal(const Ray&r, const vec3& outward_normal){
+            front_face = glm::dot(r.direction(), outward_normal) < 0;
+            normal = front_face ? outward_normal : -outward_normal;
+        }
 };
 
 //virtual lets you override a base class method 

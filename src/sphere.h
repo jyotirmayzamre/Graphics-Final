@@ -44,7 +44,8 @@ class sphere: public hittable {
             //set hit record members (compute normalized normal by dividing by radius)
             rec.t = root;
             rec.p = r.eval(root);
-            rec.normal = (rec.p - center) / radius;
+            vec3 outward_normal = (rec.p - center) / radius;
+            rec.set_face_normal(r, outward_normal);
             return true;
         }
 

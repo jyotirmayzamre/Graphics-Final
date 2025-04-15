@@ -2,10 +2,12 @@
 #define SPHERE_H
 
 #include "hittable.h"
-#include <stdlib.h>
-
+#include "rtweekend.h"
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/norm.hpp>
+#include <stdlib.h>
+
+
 
 
 

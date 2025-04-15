@@ -1,8 +1,8 @@
 #ifndef HITTABLE_LIST_H
 #define HITTABLE_LIST_H
 
+#include "rtweekend.h"
 #include "hittable.h"
-#include <memory>
 #include <vector>
 
 using std::make_shared;
@@ -19,6 +19,8 @@ class hittable_list : public hittable {
         hittable_list(shared_ptr<hittable> object) { add(object); }
 
         void clear() { objects.clear(); }
+
+        //push back = append
         void add(shared_ptr<hittable> object) {
             objects.push_back(object);
         }

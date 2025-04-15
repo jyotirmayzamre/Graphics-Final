@@ -3,9 +3,9 @@
 #define HITTABLE_H
 
 
-#include "ray.h"
-
+#include "rtweekend.h"
 #include <stdbool.h>
+
 
 //class to store hit details - t value of ray, normal of surface
 class hit_record {

@@ -1,9 +1,6 @@
 #ifndef COLOR_H
 #define COLOR_H
 
-#include <glm/glm.hpp>
-#include <iostream>
-
 using colour = glm::dvec3;
 
 //takes in reference to output stream and pixel_colour

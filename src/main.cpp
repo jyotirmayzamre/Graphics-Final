@@ -1,8 +1,8 @@
-#include "colour.h"
 #include "camera.h"
 #include "sphere.h"
-
-#include <iostream>
+#include "hittable.h"
+#include "hittable_list.h"
+#include "rtweekend.h"
 #include <stdbool.h>
 
 
@@ -10,13 +10,12 @@
 
 // gradient to get interpolation between blue and white depending on ray's y coordinate
 //if sphere is hit, then shade based on normal vector's components
-colour ray_colour(const Ray& r){
-    sphere s(point3(0, 0, -1), 0.5);
+colour ray_colour(const Ray& r, const hittable& world){
     hit_record rec;
-    if (s.hit(r, 0.0, 2.0, rec)){
-        return 0.5*colour(rec.normal.x + 1, rec.normal.y + 1, rec.normal.z + 1);
+    if (world.hit(r, 0, infinity, rec)){
+        return 0.5 * (rec.normal + colour(1, 1, 1));
     }
-
+    
     vec3 unit_direction = glm::normalize(r.direction());
     //scale from [-1, 1] to [0, 1]
     auto a = 0.5*(unit_direction.y + 1.0);
@@ -50,6 +49,10 @@ int main(){
     vec3 pixel_delta_u = camera.getDeltaU();
     vec3 pixel_delta_v = camera.getDeltaV();
 
+    hittable_list world;
+    world.add(make_shared<sphere>(point3(0, 0, -1), 0.5));
+    world.add(make_shared<sphere>(point3(0, -100.5, -1),100 ));
+
 
     //format for ppm file
     std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
@@ -64,7 +67,7 @@ int main(){
             auto pixel_center = pixel00_loc + (double(i) * pixel_delta_u) + (double(j) * pixel_delta_v);
             auto ray_dir = pixel_center - center;
             Ray r(center, ray_dir);
-            colour pixel_colour = ray_colour(r);
+            colour pixel_colour = ray_colour(r, world);
             write_colour(std::cout, pixel_colour);
         }
     }

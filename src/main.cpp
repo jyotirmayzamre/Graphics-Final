@@ -3,13 +3,10 @@
 #include "hittable.h"
 #include "hittable_list.h"
 #include "helper.h"
-#include <stdbool.h>
-#include <chrono>
-#include <algorithm>
-#include <execution>
+#include "threadpool.h"
+
 
 using namespace std::chrono;
-
 
 
 
@@ -73,8 +70,6 @@ int main(){
     //format for ppm file
     std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
 
-    auto start  = high_resolution_clock::now();
-
     //2d vector for storing pixel values of the image
     std::vector<std::vector<colour>> image(image_height, std::vector<colour>(image_width));
     #define MT 1
@@ -82,17 +77,33 @@ int main(){
     //multithreaded approach
     //essentially compute rows in parallel
     //obtained a speedup from 6 seconds to 1.7 seconds
-    //next job is to write this using threads and not using a library
+    //next task: learn about threading properly and implement a threadpool to avoid compute for thread joining
+    auto start  = high_resolution_clock::now();
     #if MT
-        std::for_each(std::execution::par, verticalIter.begin(), verticalIter.end(), [&](double y) {
-            for (int i = 0; i < image_width; i++){
-                auto pixel_center = pixel00_loc + (double(i) * pixel_delta_u) + (double(y) * pixel_delta_v);
-                auto ray_dir = pixel_center - center;
-                Ray r(center, ray_dir);
-                colour pixel_colour = ray_colour(r, world);
-                image[y][i] = pixel_colour;
-            }
-        });
+        ThreadPool pool(std::thread::hardware_concurrency());
+        for (int j = 0; j < image_height; j++){
+            pool.enqueue([=, &image, &world]{
+                for (int i = 0; i < image_width; i++){
+                    auto pixel_center = pixel00_loc + (double(i) * pixel_delta_u) + (double(j) * pixel_delta_v);
+                    auto ray_dir = pixel_center - center;
+                    Ray r(center, ray_dir);
+                    colour pixel_colour = ray_colour(r, world);
+                    image[j][i] = pixel_colour;
+                }
+            });
+        }
+
+        // std::for_each(std::execution::par_unseq, verticalIter.begin(), verticalIter.end(), [&](double y) {
+        //     for (int i = 0; i < image_width; i++){
+        //         auto pixel_center = pixel00_loc + (double(i) * pixel_delta_u) + (double(y) * pixel_delta_v);
+        //         auto ray_dir = pixel_center - center;
+        //         Ray r(center, ray_dir);
+        //         colour pixel_colour = ray_colour(r, world);
+        //         image[y][i] = pixel_colour;
+        //     }
+        // });
+
+       
 
     //normal approach
     #else 
@@ -112,19 +123,21 @@ int main(){
         }
     #endif
     
-    auto stop = high_resolution_clock::now();
-
+    
     //negligible time of 2 seconds to write to file
     //focus more on bringing the rendering time down
     #if MT
+        std::ostringstream buffer;
         for(int j = 0; j < image_height; j++){
             for (int i = 0; i < image_width; i++){
-                write_colour(std::cout, image[j][i]);
+                write_colour(buffer, image[j][i]);
             }
         }
+        std::cout << buffer.str();
+    
     #else
     #endif
-
+    auto stop = high_resolution_clock::now();
     auto duration = duration_cast<milliseconds>(stop - start);
     std::clog << "\nRender Time: " << duration.count() << " ms\n";
     return 1;

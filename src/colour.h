@@ -2,6 +2,7 @@
 #define COLOR_H
 
 #include <sstream>
+#include <glm/glm.hpp>
 
 using colour = glm::dvec3;
 

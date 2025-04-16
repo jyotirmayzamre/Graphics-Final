@@ -3,6 +3,8 @@
 
 #include "helper.h"
 
+#include <glm/glm.hpp>
+
 using point3 = glm::dvec3;
 using vec3 = glm::dvec3;
 

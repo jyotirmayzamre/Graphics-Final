@@ -24,6 +24,12 @@ class interval {
         }
 
         static const interval empty, universe;
+
+        double clamp(double x) const{
+            if (x < min) return min;
+            if (x > max) return max;
+            return x;
+        }
 };
 
 const interval interval::empty = interval (+infinity, -infinity);

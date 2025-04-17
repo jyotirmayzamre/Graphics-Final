@@ -12,11 +12,20 @@ int main(){
     world.add(make_shared<sphere>(point3(0, 0, -1), 0.5));
     world.add(make_shared<sphere>(point3(0, -100.5, -1),100 ));
 
+    
+   
+
     Camera cam;
     cam.aspect_ratio = 16.0 / 9.0;
     cam.image_width = 1920;
+    cam.samples_per_pixel = 10;
     cam.initialize();
-    cam.render(world);
+
+    //2d vector for storing colours
+    std::vector<std::vector<colour>> image(cam.image_height, std::vector<colour>(cam.image_width));
+
+    cam.render(world, image);
+    cam.writeToFile(image);
 
     
     return 1;

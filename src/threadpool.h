@@ -42,23 +42,28 @@ class ThreadPool {
         ThreadPool(size_t num_threads) {
             for (size_t i = 0; i < num_threads; i++){
                 threads.emplace_back([this] {
-                    std::function<void()> task;
+                    while (true){
+                        std::function<void()> task;
+                        {
+                            //lock on the queue mutex to make the thread sleep till one task is in the queue
+                            std::unique_lock<std::mutex> lock(queue_mutex);
 
-                    //lock on the queue mutex to make the thread sleep till one task is in the queue
-                    std::unique_lock<std::mutex> lock(queue_mutex);
+                            //make the thread 
+                            cv.wait(lock, [this] {
+                                return !tasks.empty() || stop;
+                            });
 
-                    //make the thread 
-                    cv.wait(lock, [this] {
-                        return !tasks.empty() || stop;
-                    });
+                            if (stop && tasks.empty()){
+                                return;
+                            }
 
-                    if (tasks.empty() || stop){
-                        return;
+                            task = move(tasks.front());
+                            tasks.pop();
+                        }
+                        
+                        task();
                     }
-
-                    task = move(tasks.front());
-                    tasks.pop();
-                    task();
+                    
                 });
             }
 
@@ -66,8 +71,11 @@ class ThreadPool {
 
     
         ~ThreadPool() {
-            std::unique_lock<std::mutex> lock(queue_mutex);
-            stop = true;
+            {
+                std::unique_lock<std::mutex> lock(queue_mutex);
+                stop = true;
+            }
+            
             cv.notify_all();
 
             for(auto& thread : threads){
@@ -78,8 +86,11 @@ class ThreadPool {
 
         //enqueue function to push task into queue
         void enqueue(std::function<void()> task){
-            std::unique_lock<std::mutex> lock(queue_mutex);
-            tasks.emplace(move(task));
+            {
+                std::unique_lock<std::mutex> lock(queue_mutex);
+                tasks.emplace(move(task));
+            }
+            
             cv.notify_one();
         }
 };

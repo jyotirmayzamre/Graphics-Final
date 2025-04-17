@@ -14,7 +14,7 @@ using namespace std::chrono;
 //if sphere is hit, then shade based on normal vector's components
 colour ray_colour(const Ray& r, const hittable& world){
     hit_record rec;
-    if (world.hit(r, 0, infinity, rec)){
+    if (world.hit(r, interval(0, infinity), rec)){
         return 0.5 * (rec.normal + colour(1, 1, 1));
     }
     

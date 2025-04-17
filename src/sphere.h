@@ -19,7 +19,7 @@ class sphere: public hittable {
         //need the radius (double), center (point 3), Ray r
         //compute the ray-sphere intersection components
         //check discriminant (if the ray passes through the sphere (disc >= 0), then colour it red)
-        bool hit(const Ray&r, double ray_tmin, double ray_tmax, hit_record& rec) const override {
+        bool hit(const Ray&r, interval ray_t, hit_record& rec) const override {
              //check for if the center of the sphere is behind the camera 
             //uses squared length for faster computations (avoid square root)
             vec3 diff = center - r.origin();
@@ -36,9 +36,9 @@ class sphere: public hittable {
 
             //check if the solutions fall in the range of acceptable t's
             auto root = (h - sqrtd) / a;
-            if (root <= ray_tmin || root >= ray_tmax){
+            if (!ray_t.surrounds(root)){
                 root = (h + sqrtd) / a;
-                if (root <= ray_tmin || root >= ray_tmax){
+                if (!ray_t.surrounds(root)){
                     return false;
                 }
             }

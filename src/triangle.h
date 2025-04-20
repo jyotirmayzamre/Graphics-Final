@@ -38,6 +38,7 @@ class triangle: public hittable {
             
             auto t = M * -(f*c4 + e*c5 + d*c6);
 
+            //only compute gamma and beta if the conditions are met
             if(!ray_t.surrounds(t)){return false;}
 
             auto gamma = M * (i*c4 + h*c5 + g*c6);

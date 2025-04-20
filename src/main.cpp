@@ -12,8 +12,8 @@ int main(){
     //make a list of hittable objects
     hittable_list world;
     //world.add(make_shared<sphere>(point3(0, 0, -1), 0.5));
-    world.add(make_shared<sphere>(point3(0, -100.5, -1),100 ));
-    world.add(make_shared<triangle>(point3(-0.5, -0.5, 0.0), point3(0.5, -0.5, 0.0), point3(0.0, 0.5, 0.0)));
+    //world.add(make_shared<sphere>(point3(0, -100.5, -1),100 ));
+    world.add(make_shared<triangle>(point3(0, 0.5, -0.5), point3(0.5, 0, -0.5), point3(-0.5, 0,-0.5)));
     
    
 

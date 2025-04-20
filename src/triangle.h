@@ -34,17 +34,17 @@ class triangle: public hittable {
             auto c5 = j*c - a*l;
             auto c6 = b*l - k*c;
 
-            auto M = 1 / (a*c1 + b*c2 + c*c3);
+            auto M = 1.0 / (a*c1 + b*c2 + c*c3);
             
-            auto t = M * (-f * c4 + e*c5 + d*c6);
+            auto t = M * -(f*c4 + e*c5 + d*c6);
 
             if(!ray_t.surrounds(t)){return false;}
 
             auto gamma = M * (i*c4 + h*c5 + g*c6);
-            if(gamma < 0 || gamma > 1){return false;}
+            if(gamma < 0.0 || gamma > 1.0){return false;}
 
             auto beta = M * (j*c1 + k*c2 + l*c3);
-            if(beta < 0 || beta > 1 - gamma){return false;}
+            if(beta < 0.0 || beta > 1.0 - gamma){return false;}
 
             //store hit record details
             rec.t = t;

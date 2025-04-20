@@ -59,15 +59,8 @@ class Camera {
             //format for ppm file
             std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
 
-            //2d vector for storing pixel values of the image
-        
-
             #define MT 2
-            //multithreaded approach
-            //essentially compute rows in parallel
-            //obtained a speedup from 6 seconds to 1.7 seconds
-            //next task: learn about threading properly and implement a threadpool to avoid compute for thread joining
-            auto start  = high_resolution_clock::now();
+            //multithreaded approach using a threadpool
             #if MT == 2
                 ThreadPool pool(std::thread::hardware_concurrency());
                 for (int j = 0; j < image_height; j++){
@@ -83,9 +76,10 @@ class Camera {
                     });
                 }
 
-                //initial approach for multithreading using std::for_each
+                
 
             #elif MT == 1
+                //initial approach for multithreading using std::for_each
                 //multithreading iters
                 std::vector<double> horizontalIter, verticalIter;
                 horizontalIter.resize(image_width);
@@ -94,13 +88,15 @@ class Camera {
                 for (double i = 0; i < image_width; i++){horizontalIter.push_back(i);}
                 for (double i = 0; i < image_height; i++){verticalIter.push_back(i);}
                 std::for_each(std::execution::par_unseq, verticalIter.begin(), verticalIter.end(), [&](double y) {
-                    for (int i = 0; i < image_width; i++){
-                        auto pixel_center = pixel00_loc + (double(i) * pixel_delta_u) + (double(y) * pixel_delta_v);
-                        auto ray_dir = pixel_center - center;
-                        Ray r(center, ray_dir);
-                        colour pixel_colour = ray_colour(r, world);
-                        image[y][i] = pixel_colour;
-                    }
+                        for (int i = 0; i < image_width; i++){
+                            colour pixel_colour(0, 0, 0);
+                            for (int s = 0; s < samples_per_pixel; s++){
+                                Ray r = getRay(i, y);
+                                pixel_colour += ray_colour(r, world);
+                            }
+                            image[y][i] = sample_scale * pixel_colour;
+                        }
+                    
                 });
 
             
@@ -114,18 +110,16 @@ class Camera {
                         //calculate the pixel center and ray direction
                         //from the first pixel location, find the offset using i or j * the offset vectors for the direction and add
                         //ray direction: to get vector AB, we do (B-A)
-                        auto pixel_center = pixel00_loc + (double(i) * pixel_delta_u) + (double(j) * pixel_delta_v);
-                        auto ray_dir = pixel_center - center;
-                        Ray r(center, ray_dir);
-                        colour pixel_colour = ray_colour(r, world);
-                        image[j][i] = pixel_colour;
+                        colour pixel_colour(0, 0, 0);
+                            for (int s = 0; s < samples_per_pixel; s++){
+                                Ray r = getRay(i, j);
+                                pixel_colour += ray_colour(r, world);
+                            }
+                            image[j][i] = sample_scale * pixel_colour;
+                        
                     }
                 }
             #endif
-            
-            auto stop = high_resolution_clock::now();
-            auto duration = duration_cast<milliseconds>(stop - start);
-            std::clog << "\nTime taken to render: " << duration.count() << " ms\n";
         }
 
 
@@ -135,7 +129,6 @@ class Camera {
         void writeToFile(const std::vector<std::vector<colour>>& image) {
 
             auto start = high_resolution_clock::now();
-
             //buffer for storing pixel files to be flushed to std::cout
             std::ostringstream buffer;
 
@@ -148,11 +141,11 @@ class Camera {
                 }
             }
 
-            std::cout << buffer.str();
+            std::cout << buffer.str();            
 
             auto stop = high_resolution_clock::now();
             auto duration = duration_cast<milliseconds>(stop - start);
-            std::clog << "\nTime taken to write to file: " << duration.count() << " ms\n";
+            std::clog << "Time taken to write to file: " << duration.count() << " ms\n";
         }
         
 

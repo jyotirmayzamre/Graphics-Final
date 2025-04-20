@@ -20,7 +20,7 @@ class sphere: public hittable {
         //compute the ray-sphere intersection components
         //check discriminant (if the ray passes through the sphere (disc >= 0), then colour it red)
         bool hit(const Ray&r, interval ray_t, hit_record& rec) const override {
-             //check for if the center of the sphere is behind the camera 
+            //check for if the center of the sphere is behind the camera 
             //uses squared length for faster computations (avoid square root)
             vec3 diff = center - r.origin();
             auto a = glm::length2(r.direction());

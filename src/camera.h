@@ -34,7 +34,7 @@ class Camera {
             image_height = (image_height < 1) ? 1 : image_height;
 
             //camera center
-            center = point3(0, 0, 0);
+            center = point3(0, 0, 100);
 
             //viewport dimensions
             auto distance = 1.0;
@@ -183,7 +183,7 @@ class Camera {
         }
 
         vec3 bound() const {
-            return vec3(random_double() - 0.5, random_double() - 0.5, 0);
+            return vec3(random_double(0.0, 0.9999) - 0.5, random_double(0.0, 0.9999) - 0.5, 0);
         }
 };
 

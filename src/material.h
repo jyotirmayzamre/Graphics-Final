@@ -60,6 +60,14 @@ class metal: public material {
         
 };
 
+//absorbing material
+class absorbing : public material {
+    public:
+        bool scatter(const Ray& r, const hit_record& rec, colour& attenuation, Ray& scattered) const override {
+            return false;
+        }
+    };
+
 
 
 

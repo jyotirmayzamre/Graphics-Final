@@ -2,8 +2,8 @@
 #define CAMERA_H
 
 #include "hittable.h"
-#include "material.h"
 #include "threadpool.h"
+#include "material.h"
 
 using namespace std::chrono;
 
@@ -36,9 +36,9 @@ class Camera {
             image_height = (image_height < 1) ? 1 : image_height;
 
             //camera center
-            //center = point3(25, -10, -100);
+            center = point3(25, -10, 100);
 
-            center = point3(0, 0, 0);
+            //center = point3(0, 0, 0);
 
             //viewport dimensions
             auto distance = 1.0;
@@ -179,15 +179,15 @@ class Camera {
                 return colour(0, 0, 0);
             }
             hit_record rec;
-            if (world.hit(r, interval(0.001, infinity), rec)){
+            if (world.hit(r, interval(0, infinity), rec)){
                 Ray scattered;
                 colour attenuation;
                 if (rec.mat->scatter(r, rec, attenuation, scattered)){
                     return attenuation * ray_colour(scattered, depth - 1, world);
                 }
-                return colour(0,0,0);
+                //return colour(0,0,0);
 
-                //return 0.5 * (rec.normal + colour(1, 1, 1));
+                return 0.5 * (rec.normal + colour(1, 1, 1));
             }
             
             vec3 unit_direction = glm::normalize(r.direction());

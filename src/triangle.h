@@ -11,7 +11,7 @@ Method to compute barcyentric coordinates taken from Marschner textbook
 class triangle: public hittable {
     public:
 
-        triangle(const point3& t1, const point3& t2, const point3& t3) : t1(t1), t2(t2), t3(t3) {}
+        triangle(const point3& t1, const point3& t2, const point3& t3, shared_ptr<material> mat) : t1(t1), t2(t2), t3(t3), mat(mat) {}
 
         bool hit(const Ray& r, interval ray_t, hit_record& rec) const override {
 
@@ -55,6 +55,7 @@ class triangle: public hittable {
             rec.p = r.eval(t);
             vec3 normal = glm::normalize(glm::cross(t2-t1, t3-t1));
             rec.set_face_normal(r, normal);
+            rec.mat = mat;
             return true;
         }
 
@@ -63,6 +64,7 @@ class triangle: public hittable {
         point3 t1;
         point3 t2;
         point3 t3;
+        shared_ptr<material> mat;
 };
 
 

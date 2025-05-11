@@ -6,12 +6,14 @@
 #include "helper.h"
 #include <stdbool.h>
 
+class material;
 
 //class to store hit details - t value of ray, normal of surface
 class hit_record {
     public:
         point3 p;
         vec3 normal;
+        shared_ptr<material> mat;
         double t;
         bool front_face;
 

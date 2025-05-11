@@ -16,14 +16,15 @@
 #include <sstream>
 #include <string>
 #include <iterator>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/norm.hpp>
 
-
-// Common Headers
 
 
 
 using std::make_shared;
 using std::shared_ptr;
+
 
 // Constant
 const double infinity = std::numeric_limits<double>::infinity();
@@ -40,10 +41,27 @@ inline double random_double(double min, double max) {
 
 
 
-
 #include "colour.h"
 #include "ray.h"
 #include "interval.h"
+
+inline vec3 rand_unit_vector() {
+    while (true) {
+        auto p = vec3(random_double(-1,1), random_double(-1,1), random_double(-1,1));
+        auto lensq = glm::length2(p);
+        if (1e-160 < lensq && lensq <= 1)
+            return p / sqrt(lensq);
+    }
+}
+
+inline bool near_zero(vec3 ray){
+    auto s = 1e-8;
+    return (std::fabs(ray.x) < s) && (std::fabs(ray.y) < s) && (std::fabs(ray.z) < s);
+}
+
+inline vec3 reflect(const vec3& v, const vec3& n){
+    return v - 2*glm::dot(v, n)*n;
+}
 
 
 inline void parse_obj(const char* file_vert, const char* file_faces){

@@ -4,7 +4,10 @@
 #include "hittable.h"
 #include "helper.h"
 
-
+/*
+Triangle class 
+Method to compute barcyentric coordinates taken from Marschner textbook
+*/
 class triangle: public hittable {
     public:
 

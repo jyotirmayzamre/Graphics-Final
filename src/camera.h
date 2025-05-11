@@ -2,6 +2,7 @@
 #define CAMERA_H
 
 #include "hittable.h"
+#include "material.h"
 #include "threadpool.h"
 
 using namespace std::chrono;
@@ -24,6 +25,7 @@ class Camera {
         int image_width;
         int samples_per_pixel;
         int image_height;
+        int max_depth;
 
         
         //function to initialize all the needed parameters
@@ -34,7 +36,9 @@ class Camera {
             image_height = (image_height < 1) ? 1 : image_height;
 
             //camera center
-            center = point3(0, 0, 100);
+            //center = point3(25, -10, -100);
+
+            center = point3(0, 0, 0);
 
             //viewport dimensions
             auto distance = 1.0;
@@ -69,7 +73,7 @@ class Camera {
                             colour pixel_colour(0, 0, 0);
                             for (int s = 0; s < samples_per_pixel; s++){
                                 Ray r = getRay(i, j);
-                                pixel_colour += ray_colour(r, world);
+                                pixel_colour += ray_colour(r, max_depth, world);
                             }
                             image[j][i] = sample_scale * pixel_colour;
                         }
@@ -170,10 +174,20 @@ class Camera {
 
         // gradient to get interpolation between blue and white depending on ray's y coordinate
         //if sphere is hit, then shade based on normal vector's components
-        colour ray_colour(const Ray& r, const hittable& world) const{
+        colour ray_colour(const Ray& r, int depth, const hittable& world) const{
+            if (depth <= 0){
+                return colour(0, 0, 0);
+            }
             hit_record rec;
-            if (world.hit(r, interval(0, infinity), rec)){
-                return 0.5 * (rec.normal + colour(1, 1, 1));
+            if (world.hit(r, interval(0.001, infinity), rec)){
+                Ray scattered;
+                colour attenuation;
+                if (rec.mat->scatter(r, rec, attenuation, scattered)){
+                    return attenuation * ray_colour(scattered, depth - 1, world);
+                }
+                return colour(0,0,0);
+
+                //return 0.5 * (rec.normal + colour(1, 1, 1));
             }
             
             vec3 unit_direction = glm::normalize(r.direction());

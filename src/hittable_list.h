@@ -3,6 +3,7 @@
 
 #include "helper.h"
 #include "hittable.h"
+#include "triangle.h"
 #include <vector>
 
 using std::make_shared;
@@ -13,9 +14,15 @@ class hittable_list : public hittable {
         //objects holds shared pointers to hittable objects
         //so using shared pointers allows other pieces of code to access the object without memory related issues
         //no need to cleanup the object yourself
-        std::vector<shared_ptr<hittable>> objects;
+       std::vector<shared_ptr<hittable>> objects;
+
+    //    std::vector<triangle> objects;
 
         hittable_list() {}
+        // hittable_list(triangle object) { add(object); }
+
+
+
         hittable_list(shared_ptr<hittable> object) { add(object); }
 
         void clear() { objects.clear(); }
@@ -24,6 +31,10 @@ class hittable_list : public hittable {
         void add(shared_ptr<hittable> object) {
             objects.push_back(object);
         }
+
+        // void add(triangle object){
+        //     objects.push_back(object);
+        // }
 
         bool hit(const Ray&r, interval ray_t,  hit_record& rec) const override {
             hit_record temp_rec;
@@ -34,6 +45,7 @@ class hittable_list : public hittable {
             //loop over all objects in hittable list
             //if any object is hit, update hit records
             //new t will always be smaller than closest and keep passing it as ray_tmax
+
             for (const auto& object : objects) {
                 if (object->hit(r, interval(ray_t.min, closest), temp_rec)){
                     hit_anything = true;
@@ -41,6 +53,15 @@ class hittable_list : public hittable {
                     rec = temp_rec;
                 }
             }
+
+            // for (const auto object : objects) {
+            //     if (object.hit(r, interval(ray_t.min, closest), temp_rec)){
+            //         hit_anything = true;
+            //         closest = temp_rec.t;
+            //         rec = temp_rec;
+            //     }
+            // }
+
             return hit_anything;
         }
 };

@@ -289,6 +289,7 @@ class KDTree {
                         double d1 = getCoord(diff, axis1);
                         double d2 = getCoord(diff, axis2);
                         
+                        //get surface areas of possible children
                         float bSA = 2*(d1*d2 + (point - minVal) * (d1 + d2));
                         float aSA = 2*(d1*d2 + (maxVal - point) * (d1 + d2));
 

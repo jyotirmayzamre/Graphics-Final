@@ -1,4 +1,4 @@
 all:
 	g++ -Iinclude src/*.cpp -o raytracer; \
-	./raytracer > image.ppm; \
-	display image.ppm
+	./raytracer > sphere.ppm; \
+	display sphere.ppm

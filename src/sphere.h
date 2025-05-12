@@ -49,6 +49,11 @@ class sphere: public hittable {
             return true;
         }
 
+        Bounds3f BoundingBox() const override {
+            
+            return Bounds3f(point3(0, 0, 0), point3(0, 0, 0)); 
+        }
+
     private:
         point3 center;
         double radius;

@@ -59,17 +59,17 @@ class triangle: public hittable {
             return true;
         }
 
-    Bounds3f BoundingBox() const override {
-        double minX = std::min({t1.x, t2.x, t3.x});
-        double minY = std::min({t1.y, t2.y, t3.y});
-        double minZ = std::min({t1.z, t2.z, t3.z});
+        Bounds3f BoundingBox() const override {
+            double minX = std::min({t1.x, t2.x, t3.x});
+            double minY = std::min({t1.y, t2.y, t3.y});
+            double minZ = std::min({t1.z, t2.z, t3.z});
 
-        double maxX = std::max({t1.x, t2.x, t3.x});
-        double maxY = std::max({t1.y, t2.y, t3.y});
-        double maxZ = std::max({t1.z, t2.z, t3.z});
-        
-        return Bounds3f(point3(minX, minY, minZ), point3(maxX, maxY, maxZ)); 
-    }
+            double maxX = std::max({t1.x, t2.x, t3.x});
+            double maxY = std::max({t1.y, t2.y, t3.y});
+            double maxZ = std::max({t1.z, t2.z, t3.z});
+            
+            return Bounds3f(point3(minX, minY, minZ), point3(maxX, maxY, maxZ)); 
+        }
 
 
     private:

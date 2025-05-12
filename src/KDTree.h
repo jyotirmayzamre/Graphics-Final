@@ -4,26 +4,29 @@
 #include "helper.h"
 #include "triangle.h"
 #include "hittable_list.h"
+#include <variant>
+
+/*
+Reference used for KD Tree Algorithm: https://pbr-book.org/3ed-2018/Primitives_and_Intersection_Acceleration/Kd-Tree_Accelerator#
+*/
 
 /*
     Struct for bounding edge
 */
-enum class EdgeType { Start, End };
 
+enum class EdgeType { Start, End };
 struct BoundEdge {
     float t;
-    int primNum;
+    int num_prims;
     EdgeType type;
 
     BoundEdge() {}
-    BoundEdge(float t, int primNum, bool starting) : t(t), primNum(primNum){
+
+    BoundEdge(float t, int primNum, bool starting) : t(t), num_prims(num_prims){
         type = starting ? EdgeType::Start : EdgeType::End;
     }
 };
 
-/*
-    Struct for tree node
-*/
 
 struct KD_Node {
     union {
@@ -98,7 +101,7 @@ class KDTree {
             }
 
             //store bounding boxes for each primitive
-            std::vector<Bounds3f> primBounds;
+            std::vector<Bounds> primBounds;
             primBounds.reserve(primSize);
             for (const auto& object : world.objects){
                 primBounds.push_back(object->BoundingBox());
@@ -134,7 +137,7 @@ class KDTree {
         //method to check intersection with the ray
         bool intersect(const Ray& r, hit_record& rec) const {
             double tMin, tMax;
-            if(!bounds.IntersectP(r, tMin, tMax)){
+            if(!bounds.intersect(r, tMin, tMax)){
                 return false;
             }
 
@@ -224,11 +227,11 @@ class KDTree {
         std::vector<KD_Node> nodes;
         int allocated_nodes;
         int next_free;
-        Bounds3f bounds = world.BoundingBox();
+        Bounds bounds = world.BoundingBox();
         
 
         //method to build the tree
-        void buildTree(int node_offset, const Bounds3f& node_bounds, const std::vector<Bounds3f>& allBounds, std::vector<int>& primNums, int num_prims, int depth, const std::unique_ptr<BoundEdge[]> edges[3], std::vector<int>& prims0, std::vector<int>& prims1, int badRefines){
+        void buildTree(int node_offset, const Bounds& node_bounds, const std::vector<Bounds>& allBounds, std::vector<int>& primNums, int num_prims, int depth, std::unique_ptr<BoundEdge[]> edges[3], std::vector<int>& prims0, std::vector<int>& prims1, int badRefines){
             if (next_free == allocated_nodes){
                 int newNum = std::max(allocated_nodes*2, 512);
                 if (nodes.size() < newNum){
@@ -262,7 +265,7 @@ class KDTree {
                 //initialize edges
                 for (int i = 0; i < num_prims; i++){
                     int prim = primNums[i];
-                    const Bounds3f& bound = allBounds[prim];
+                    const Bounds& bound = allBounds[prim];
                     float minVal = getCoord(bound.min, axis);
                     float maxVal = getCoord(bound.max, axis);
                     edges[axis][2*i] = BoundEdge(minVal, prim, true);
@@ -330,17 +333,17 @@ class KDTree {
             int n0 = 0, n1 = 0;
             for (int i = 0; i < bestOffset; i++){
                 if(edges[bestAxis][i].type == EdgeType::Start){
-                    prims0[n0++] = edges[bestAxis][i].primNum;
+                    prims0[n0++] = edges[bestAxis][i].num_prims;
                 }
             }
             for (int i = bestOffset + 1; i < 2 * num_prims; i++){
                 if (edges[bestAxis][i].type == EdgeType::End){
-                    prims1[n1++] = edges[bestAxis][i].primNum;
+                    prims1[n1++] = edges[bestAxis][i].num_prims;
                 }
             }
             // std::cerr << n0 << ' ' << n1 << '\n';
             float split = edges[bestAxis][bestOffset].t;
-            Bounds3f bounds0 = node_bounds, bounds1 = node_bounds;
+            Bounds bounds0 = node_bounds, bounds1 = node_bounds;
             switch(bestAxis){
                 case(0):
                     bounds0.max.x = split;

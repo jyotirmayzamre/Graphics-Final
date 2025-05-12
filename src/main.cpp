@@ -8,6 +8,10 @@
 #include "material.h"
 #include "KDTree.h"
 
+/*
+Base raytracer followed from Ray Tracing in One Weekend
+Modified for multithreading + parsing objs + efficient file writing using buffer + triangle intersections + bounding boxes + KDTree (not working fully)
+*/
 
 inline void create_mesh(const char* file, hittable_list& world){
     std::ifstream mesh(file);
@@ -34,14 +38,14 @@ int main(){
     
     //make a list of hittable objects
     hittable_list world;
-    // create_mesh("assets/dragon.txt", world);
+    create_mesh("assets/dragon.txt", world);
 
     //KDTree tree(world);
 
     auto absorb = make_shared<absorbing>();
 
-    world.add(make_shared<sphere>(point3(0, 0, -1), 0.5, absorb));
-    world.add(make_shared<sphere>(point3(0, -100.5, -1),100, absorb));
+    // world.add(make_shared<sphere>(point3(0, 0, -1), 0.5, absorb));
+    // world.add(make_shared<sphere>(point3(0, -100.5, -1),100, absorb));
 
     // auto material_ground = make_shared<lambertian>(colour(0.8, 0.8, 0.0));
     // auto material_center = make_shared<lambertian>(colour(0.1, 0.2, 0.5));
@@ -57,8 +61,8 @@ int main(){
 
     Camera cam;
     cam.aspect_ratio = 16.0 / 9.0;
-    cam.image_width = 1920;
-    cam.max_depth = 200;
+    cam.image_width = 100;
+    cam.max_depth = 1;
     cam.samples_per_pixel = 1;
     cam.initialize();
 

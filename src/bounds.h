@@ -4,11 +4,11 @@
 #include "ray.h"
 #include "helper.h"
 
-class Bounds3f {
+class Bounds {
     public:
         point3 min, max;
 
-        Bounds3f(const point3& min, const point3& max) : min(min), max(max) {}
+        Bounds(const point3& min, const point3& max) : min(min), max(max) {}
 
         float SurfaceArea() const {
             float x = max.x - min.x;
@@ -31,7 +31,8 @@ class Bounds3f {
             }
         }
 
-        bool IntersectP(const Ray& r, double& tMin, double& tMax) const {
+        //slab method for intersection with axis aligned bounding box
+        bool intersect(const Ray& r, double& tMin, double& tMax) const {
             
             double tmin = (min.x - r.origin().x) / r.direction().x;
             double tmax = (max.x - r.origin().x) / r.direction().x;
@@ -70,7 +71,7 @@ class Bounds3f {
 
 
 
-Bounds3f Union(const Bounds3f& b1, const Bounds3f& b2){
+Bounds Union(const Bounds& b1, const Bounds& b2){
     double newMinX = std::min({b1.min.x, b2.min.x});
     double newMinY = std::min({b1.min.y, b2.min.y});
     double newMinZ = std::min({b1.min.z, b2.min.z});
@@ -80,7 +81,7 @@ Bounds3f Union(const Bounds3f& b1, const Bounds3f& b2){
     double newMaxZ = std::max({b1.max.z, b2.max.z});
 
 
-    return Bounds3f(point3(newMinX, newMinY, newMinZ), point3(newMaxX, newMaxY, newMaxZ));
+    return Bounds(point3(newMinX, newMinY, newMinZ), point3(newMaxX, newMaxY, newMaxZ));
 
 }
 

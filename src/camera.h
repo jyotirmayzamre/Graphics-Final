@@ -39,9 +39,9 @@ class Camera {
             image_height = (image_height < 1) ? 1 : image_height;
 
             //camera center
-            //center = point3(25, -10, 100);
+            center = point3(25, -10, 100);
 
-            center = point3(0, 0, 0);
+            //center = point3(0, 0, 0);
 
             //viewport dimensions
             auto distance = 1.0;
@@ -121,7 +121,7 @@ class Camera {
                         colour pixel_colour(0, 0, 0);
                             for (int s = 0; s < samples_per_pixel; s++){
                                 Ray r = getRay(i, j);
-                                pixel_colour += ray_colour(r, world);
+                                pixel_colour += ray_colour(r, max_depth, world);
                             }
                             image[j][i] = sample_scale * pixel_colour;
                         

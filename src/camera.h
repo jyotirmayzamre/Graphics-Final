@@ -190,9 +190,9 @@ class Camera {
                 if (rec.mat->scatter(r, rec, attenuation, scattered)){
                     return attenuation * ray_colour(scattered, depth - 1, world);
                 }
-                return colour(0,0,0);
+                //return colour(0,0,0);
 
-                //return 0.5 * (rec.normal + colour(1, 1, 1));
+                return 0.5 * (rec.normal + colour(1, 1, 1));
             }
             
             vec3 unit_direction = glm::normalize(r.direction());

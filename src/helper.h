@@ -63,6 +63,15 @@ inline vec3 reflect(const vec3& v, const vec3& n){
     return v - 2*glm::dot(v, n)*n;
 }
 
+double getCoord(const point3& p, int axis){
+    switch(axis){
+        case 0: return p.x;
+        case 1: return p.y;
+        case 2: return p.z;
+        default: throw std::runtime_error("Invalid axis");
+    }
+}
+
 
 inline void parse_obj(const char* file_vert, const char* file_faces){
     std::vector<point3> vertices;

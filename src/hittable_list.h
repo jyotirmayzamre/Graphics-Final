@@ -32,6 +32,11 @@ class hittable_list : public hittable {
             objects.push_back(object);
         }
 
+        //size method
+        size_t size() const {
+            return objects.size();
+        }
+
         // void add(triangle object){
         //     objects.push_back(object);
         // }
@@ -45,6 +50,7 @@ class hittable_list : public hittable {
             //loop over all objects in hittable list
             //if any object is hit, update hit records
             //new t will always be smaller than closest and keep passing it as ray_tmax
+
 
             for (const auto& object : objects) {
                 if (object->hit(r, interval(ray_t.min, closest), temp_rec)){
@@ -63,6 +69,14 @@ class hittable_list : public hittable {
             // }
 
             return hit_anything;
+        }
+
+        Bounds3f BoundingBox() const override {
+            Bounds3f box = objects[0]->BoundingBox();
+            for (const auto& object : objects){
+                box = Union(box, object->BoundingBox());
+            }
+            return box;
         }
 };
 

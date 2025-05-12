@@ -5,6 +5,7 @@
 
 #include "helper.h"
 #include <stdbool.h>
+#include "bounds.h"
 
 class material;
 
@@ -32,6 +33,7 @@ class hittable {
         virtual ~hittable() = default;
 
         virtual bool hit(const Ray& r, interval ray_t, hit_record& rec) const = 0;
+        virtual Bounds3f BoundingBox() const = 0;
 };
 
 

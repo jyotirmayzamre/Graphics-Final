@@ -72,6 +72,13 @@ struct KD_Node {
     int aboveChild() const {return above_child >> 2;}
 };
 
+/* To-Do struct*/
+
+struct ToDo {
+    const KD_Node* node;
+    double tMin, tMax;
+};
+
 /*
 Class for KD tree (acceleration structure)
 */
@@ -81,7 +88,7 @@ class KDTree {
     public:
 
         //constructor
-        KDTree(const hittable_list& world, int isectCost = 80, int traversalCost = 1, float emptyBonus = 0.5, int maxPrims = 1, int maxDepth = -1) : isectCost(isectCost), traversalCost(traversalCost), maxPrims(maxPrims), emptyBonus(emptyBonus), world(world){
+        KDTree(const hittable_list& world, int isectCost = 80, int traversalCost = 1, int maxPrims = 1, int maxDepth = -1) : isectCost(isectCost), traversalCost(traversalCost), maxPrims(maxPrims), world(world){
             allocated_nodes = 0;
             next_free = 0;
             size_t primSize = world.size();
@@ -113,7 +120,8 @@ class KDTree {
             std::vector<int> prims2((maxDepth+1)*primSize);
 
             
-            buildTree(0, bounds, primBounds, primNums, primSize, maxDepth, edges, prims1, prims2);
+            buildTree(0, bounds, primBounds, primNums, primSize, maxDepth, edges, prims1, prims2, 0);
+            std::cerr << "Tree built";
         }
 
 
@@ -124,14 +132,93 @@ class KDTree {
 
 
         //method to check intersection with the ray
-        bool intersect(const Ray& r) const {
-            return true;
+        bool intersect(const Ray& r, hit_record& rec) const {
+            double tMin, tMax;
+            if(!bounds.IntersectP(r, tMin, tMax)){
+                return false;
+            }
+
+
+            vec3 invDir = 1.0 / r.direction();
+            ToDo arr[64];
+            int curr = 0;
+
+            bool hit = false;
+            const KD_Node* node = &nodes[0];
+
+            while (node != nullptr){
+                if (!node->isLeaf()){
+
+                    int axis = node->splitAxis();
+
+                    double orig = getCoord(r.origin(), axis);
+                    double r_dir = getCoord(point3(r.direction()), axis);
+                    double inv_dir = getCoord(invDir, axis);
+                    float tPlane = (node->splitPos() - orig) * inv_dir;
+
+                    //get children pointers
+                    const KD_Node* firstChild, *secondChild;
+                    int belowFirst = (orig < node->splitPos()) || (orig == node->splitPos() && r_dir <= 0);
+                    if (belowFirst){
+                        firstChild = node + 1;
+                        secondChild = &nodes[node->aboveChild()];
+                    } else {
+                        firstChild = &nodes[node->aboveChild()];
+                        secondChild = node + 1;
+                    }
+
+                    if (tPlane > tMax || tPlane <= 0){
+                        node = firstChild;
+                    } else if (tPlane < tMin){
+                        node = secondChild;
+                    } else {
+                        arr[curr].node = secondChild;
+                        arr[curr].tMin = tPlane;
+                        arr[curr].tMax = tMax;
+                        curr++;
+                        node = firstChild;
+                        tMax = tPlane;
+
+                    }
+                } else {
+                    int nPrimitives = node->numPrimitives();
+                    if (nPrimitives == 1){
+                        const std::shared_ptr<hittable> &p = world.objects[node->one_prim];
+                        if(p->hit(r, interval(tMin, tMax), rec)){
+                            hit = true;
+                        } else {
+                            for (int i = 0; i < nPrimitives; i++){
+                                hit_record temp_rec;
+                                auto closest = tMax;
+                                int index = tri_indices[node->index_offset + i];
+                                const std::shared_ptr<hittable> &p = world.objects[index];
+                                if(p->hit(r, interval(tMin, closest), temp_rec)){
+                                    hit = true;
+                                    closest = temp_rec.t;
+                                    rec = temp_rec; 
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (curr > 0){
+                    curr--;
+                    node = arr[curr].node;
+                    tMin = arr[curr].tMin;
+                    tMax = arr[curr].tMax;
+                } else{
+                    break;
+                }
+            }
+            return hit;
+
+
         }
 
 
     private:
         const int isectCost, traversalCost, maxPrims;
-        const float emptyBonus;
         hittable_list world;
         std::vector<int> tri_indices;
         std::vector<KD_Node> nodes;
@@ -141,7 +228,7 @@ class KDTree {
         
 
         //method to build the tree
-        void buildTree(int node_offset, const Bounds3f& node_bounds, const std::vector<Bounds3f>& allBounds, std::vector<int>& primNums, int num_prims, int depth, const std::unique_ptr<BoundEdge[]> edges[3], std::vector<int>& prims0, std::vector<int>& prims1){
+        void buildTree(int node_offset, const Bounds3f& node_bounds, const std::vector<Bounds3f>& allBounds, std::vector<int>& primNums, int num_prims, int depth, const std::unique_ptr<BoundEdge[]> edges[3], std::vector<int>& prims0, std::vector<int>& prims1, int badRefines){
             if (next_free == allocated_nodes){
                 int newNum = std::max(allocated_nodes*2, 512);
                 if (nodes.size() < newNum){
@@ -162,12 +249,13 @@ class KDTree {
             float bestCost = infinity;
             float oldCost = isectCost * float(num_prims);
             float invNodeSA = 1/node_bounds.SurfaceArea();
+            
 
             //used for calculating new surface areas
             point3 diff = node_bounds.max - node_bounds.min;
 
             //choose axis based on max distance
-            int axis = node_bounds.maximumExtent();
+            int axis = node_bounds.largest();
             int retries = 0;
             retry:
 
@@ -175,18 +263,16 @@ class KDTree {
                 for (int i = 0; i < num_prims; i++){
                     int prim = primNums[i];
                     const Bounds3f& bound = allBounds[prim];
-                    edges[axis][2*i] = BoundEdge(getCoord(bound.min, axis), prim, true);
-                    edges[axis][2*i + 1] = BoundEdge(getCoord(bound.max, axis), prim, false);
+                    float minVal = getCoord(bound.min, axis);
+                    float maxVal = getCoord(bound.max, axis);
+                    edges[axis][2*i] = BoundEdge(minVal, prim, true);
+                    edges[axis][2*i + 1] = BoundEdge(maxVal, prim, false);
                 }
 
                 //sort edges for the given axis
                 std::sort(&edges[axis][0], &edges[axis][2*num_prims],
-                    [](const BoundEdge & e0, const BoundEdge &e1) -> bool {
-                        if (e0.t == e1.t){
-                            return (int)e0.type < (int)e1.type;
-                        } else {
-                            return e0.t < e1.t;
-                        }
+                    [](const BoundEdge & a, const BoundEdge &b) {
+                        return (a.t == b.t) ? ((int)a.type < (int)b.type) : (a.t < b.t);
                     });
 
                 //computing costs of splits along a particular axis
@@ -196,16 +282,21 @@ class KDTree {
                         above--;
                     }
                     float point = edges[axis][i].t;
-                    if (point > getCoord(node_bounds.min, axis) && point < getCoord(node_bounds.max, axis)){
+                    double minVal = getCoord(node_bounds.min, axis);
+                    double maxVal = getCoord(node_bounds.max, axis);
+                    if (point > minVal && point < maxVal){
                         int axis1 = (axis + 1) % 3, axis2 = (axis+2)%3;
                         double d1 = getCoord(diff, axis1);
                         double d2 = getCoord(diff, axis2);
-                        float belowSA = 2*(d1*d2 + (point - getCoord(node_bounds.min, axis)) * (d1 + d2));
-                        float aboveSA = 2*(d1*d2 + (getCoord(node_bounds.max, axis) - point) * (d1 + d2));
+                        
+                        float bSA = 2*(d1*d2 + (point - minVal) * (d1 + d2));
+                        float aSA = 2*(d1*d2 + (maxVal - point) * (d1 + d2));
 
                         //compute costs
-                        float pBelow = belowSA * invNodeSA;
-                        float pAbove = aboveSA * invNodeSA;
+                        float pBelow = bSA * invNodeSA;
+                        float pAbove = aSA * invNodeSA;
+
+                        //heuristic for cost 
                         float cost = traversalCost + isectCost * (pBelow * below + pAbove * above);
 
                         //compare costs and update best variables
@@ -228,7 +319,8 @@ class KDTree {
                 axis = (axis+1)%3;
                 goto retry;
             }
-            if (bestCost > 4*oldCost && num_prims < 16 || bestAxis == -1){
+            if (bestCost > oldCost) badRefines++;
+            if (bestCost > 4*oldCost && num_prims < 16 || bestAxis == -1 || badRefines == 3){
                 nodes[node_offset].initLeaf(primNums, num_prims, tri_indices);
                 return;
             }
@@ -245,36 +337,34 @@ class KDTree {
                     prims1[n1++] = edges[bestAxis][i].primNum;
                 }
             }
-
+            // std::cerr << n0 << ' ' << n1 << '\n';
             float split = edges[bestAxis][bestOffset].t;
             Bounds3f bounds0 = node_bounds, bounds1 = node_bounds;
             switch(bestAxis){
                 case(0):
                     bounds0.max.x = split;
                     bounds1.min.x = split;
-                    return;
+                    break;
                 case(1):
                     bounds0.max.y = split;
                     bounds1.min.y = split;
-                    return;
+                    break;
                 case(2):
                     bounds0.max.z = split;
                     bounds1.min.z = split;
-                    return;
+                    break;
                 default: throw std::runtime_error("Invalid axis");
             }
 
             std::vector<int> tail(prims1.begin() + num_prims, prims1.end());
             //recursively build children node
-            buildTree(node_offset + 1, bounds0, allBounds, prims0, n0, depth-1, edges, prims0, tail);
+            buildTree(node_offset + 1, bounds0, allBounds, prims0, n0, depth-1, edges, prims0, tail, badRefines);
 
             int aboveChild = next_free;
-            buildTree(aboveChild, bounds1, allBounds, prims1, n1, depth-1, edges, prims0, tail);
+            nodes[node_offset].initInterior(bestAxis, aboveChild, split);
+            buildTree(aboveChild, bounds1, allBounds, prims1, n1, depth-1, edges, prims0, tail, badRefines);
         }
 };
-
-
-
 
 
 #endif 

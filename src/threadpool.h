@@ -57,10 +57,12 @@ class ThreadPool {
                                 return;
                             }
 
+                            //dequeue task
                             task = move(tasks.front());
                             tasks.pop();
                         }
                         
+                        //run task
                         task();
                     }
                     
@@ -69,9 +71,6 @@ class ThreadPool {
 
         }
 
-        void wait() {
-            
-        }
         ~ThreadPool() {
             {
                 std::unique_lock<std::mutex> lock(queue_mutex);
@@ -80,6 +79,7 @@ class ThreadPool {
             
             cv.notify_all();
 
+            //join all the threads
             for(auto& thread : threads){
                 thread.join();
             }

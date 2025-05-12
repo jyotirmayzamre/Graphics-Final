@@ -4,6 +4,8 @@
 #include "hittable.h"
 #include "threadpool.h"
 #include "material.h"
+#include "KDTree.h"
+
 
 using namespace std::chrono;
 
@@ -26,6 +28,7 @@ class Camera {
         int samples_per_pixel;
         int image_height;
         int max_depth;
+
 
         
         //function to initialize all the needed parameters
@@ -57,8 +60,8 @@ class Camera {
             sample_scale = 1.0 / samples_per_pixel;
         }
 
-
-        void render(const hittable& world, std::vector<std::vector<colour>>& image){
+        //const hittable& world
+        void render(const KDTree& tree, std::vector<std::vector<colour>>& image){
 
             //format for ppm file
             std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
@@ -68,12 +71,13 @@ class Camera {
             #if MT == 2
                 ThreadPool pool(std::thread::hardware_concurrency());
                 for (int j = 0; j < image_height; j++){
-                    pool.enqueue([=, &image, &world]{
+                    //&world
+                    pool.enqueue([=, &image, &tree]{
                         for (int i = 0; i < image_width; i++){
                             colour pixel_colour(0, 0, 0);
                             for (int s = 0; s < samples_per_pixel; s++){
                                 Ray r = getRay(i, j);
-                                pixel_colour += ray_colour(r, max_depth, world);
+                                pixel_colour += ray_colour(r, max_depth, tree);
                             }
                             image[j][i] = sample_scale * pixel_colour;
                         }
@@ -174,16 +178,17 @@ class Camera {
 
         // gradient to get interpolation between blue and white depending on ray's y coordinate
         //if sphere is hit, then shade based on normal vector's components
-        colour ray_colour(const Ray& r, int depth, const hittable& world) const{
+        colour ray_colour(const Ray& r, int depth, const KDTree& tree) const{
             if (depth <= 0){
                 return colour(0, 0, 0);
             }
             hit_record rec;
-            if (world.hit(r, interval(0, infinity), rec)){
+            //if (world.hit(r, interval(0, infinity), rec)){
+            if(tree.intersect(r, rec)){
                 Ray scattered;
                 colour attenuation;
                 if (rec.mat->scatter(r, rec, attenuation, scattered)){
-                    return attenuation * ray_colour(scattered, depth - 1, world);
+                    return attenuation * ray_colour(scattered, depth - 1, tree);
                 }
                 //return colour(0,0,0);
 

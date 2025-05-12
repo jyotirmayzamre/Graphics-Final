@@ -6,6 +6,7 @@
 #include "helper.h"
 #include "threadpool.h"
 #include "material.h"
+#include "KDTree.h"
 
 
 inline void create_mesh(const char* file, hittable_list& world){
@@ -35,6 +36,8 @@ int main(){
     hittable_list world;
     create_mesh("assets/dragon.txt", world);
 
+    KDTree tree(world);
+
     // world.add(make_shared<sphere>(point3(0, 0, -1), 0.5));
     // world.add(make_shared<sphere>(point3(0, -100.5, -1),100 ));
 
@@ -61,7 +64,8 @@ int main(){
     std::vector<std::vector<colour>> image(cam.image_height, std::vector<colour>(cam.image_width));
     auto start = high_resolution_clock::now();
 
-    cam.render(world, image);
+    //cam.render(world, image);
+    cam.render(tree, image);
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<milliseconds>(stop - start);
 

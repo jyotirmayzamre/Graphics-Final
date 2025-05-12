@@ -38,7 +38,7 @@ int main(){
     
     //make a list of hittable objects
     hittable_list world;
-    create_mesh("assets/dragon.txt", world);
+    create_mesh("dragon/dragon.txt", world);
 
     //KDTree tree(world);
 
